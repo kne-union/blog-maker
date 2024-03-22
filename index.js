@@ -6,12 +6,15 @@ const fs = require('fs-extra');
 const crypto = require('crypto');
 const last = require('lodash/last');
 const createFileTree = require('./libs/createFileTree');
+const renderMarkdown = require('./libs/renderMarkdown');
 
 (async () => {
   const appDir = process.cwd();
   const output = process.env.OUTPUT_PATH || path.resolve(appDir, 'build');
-
   const filesPath = await glob('**/*.md', { ignore: ['node_modules/**/*', 'public/**/*', 'build/**/*'], cwd: appDir });
+  await fs.emptyDir(output);
+  await fs.emptyDir(path.resolve(output, 'manifest-pages'));
+  await fs.emptyDir(path.resolve(output, 'manifest-pages', 'html'));
   const fileList = await Promise.all(
     filesPath.map(async item => {
       const md5 = crypto.createHash('md5');
@@ -42,11 +45,21 @@ const createFileTree = require('./libs/createFileTree');
 
       const { mtime } = await fs.stat(item);
 
+      const htmlContent = await renderMarkdown(await fs.readFile(item, 'utf8'), {
+        outputAssetsPath: path.resolve(output, 'assets')
+      });
+
+      const htmlFileName = (() => {
+        const md5 = crypto.createHash('md5');
+        return md5.update(htmlContent).digest('hex') + '.html';
+      })();
+      await fs.writeFile(path.resolve(output, 'manifest-pages', 'html', htmlFileName), htmlContent);
       return Object.assign(
         {},
         {
           id: md5.update(item).digest('hex'),
           path: '/' + item.split(path.sep).join('/'),
+          htmlPath: '/manifest-pages/html/' + htmlFileName,
           title: filename,
           author,
           index,
@@ -62,7 +75,6 @@ const createFileTree = require('./libs/createFileTree');
   const { folderTree, files } = createFileTree(fileList, { pageSize: Number.isInteger(PAGE_SIZE) ? PAGE_SIZE : 20 });
 
   //输出构建文件
-  await fs.emptyDir(output);
   await Promise.all(
     filesPath.map(async file => {
       const dir = path.join(output, path.dirname(file));
@@ -74,8 +86,6 @@ const createFileTree = require('./libs/createFileTree');
 
   await fs.writeJson(path.resolve(output, 'manifest.json'), fileList);
   await fs.writeJson(path.resolve(output, 'folder-tree.json'), folderTree);
-
-  await fs.emptyDir(path.resolve(output, 'manifest-pages'));
   await Promise.all(
     Object.keys(files).map(async id => {
       await fs.emptyDir(path.resolve(output, 'manifest-pages', id));

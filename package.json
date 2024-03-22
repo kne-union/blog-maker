@@ -1,6 +1,6 @@
 {
   "name": "@kne/blog-maker",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "生成一个博客的描述信息",
   "bin": "index.js",
   "scripts": {
@@ -38,6 +38,16 @@
   "dependencies": {
     "fs-extra": "^11.2.0",
     "glob": "^10.3.10",
-    "lodash": "^4.17.21"
+    "highlight.js": "^11.9.0",
+    "lodash": "^4.17.21",
+    "markdown-it": "^14.1.0",
+    "markdown-it-mathjax": "^2.0.0",
+    "markdown-it-replace-link": "^1.2.1",
+    "markdown-it-task-lists": "^2.1.1",
+    "markdown-it-textual-uml": "^0.17.1",
+    "plantuml-encoder": "^1.4.0",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6",
+    "urlencode": "^2.0.0"
   }
 }
