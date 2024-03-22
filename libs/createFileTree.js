@@ -8,13 +8,14 @@ const createFileTree = (paths, options) => {
     const segments = item.path.split('/').filter(name => !!name);
 
     let node = tree,
-      parentNode;
+      parentNode = node;
     segments.forEach((segment, index) => {
       let nextNode = node.find(item => item.label === segment);
       if (!nextNode && index === segments.length - 1) {
         const targetItem = Object.assign({}, item, { label: item.title || segment });
-        const list = files[parentNode.id] || [];
-        files[parentNode.id] = [...list, targetItem].sort((a, b) => a - b);
+        const parentId = parentNode.id || 'root';
+        const list = files[parentId] || [];
+        files[parentId] = [...list, targetItem].sort((a, b) => a - b);
         return;
       }
       if (!nextNode && index < segments.length - 1) {
