@@ -1,8 +1,8 @@
 {
   "name": "@kne/blog-maker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "生成一个博客的描述信息",
-  "main": "index.js",
+  "bin": "index.js",
   "scripts": {
     "init": "husky",
     "build:md": "npx @kne/md-doc",
