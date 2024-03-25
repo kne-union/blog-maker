@@ -88,7 +88,7 @@ const renderMarkdown = require('./libs/renderMarkdown');
   (await fs.exists('assets')) && (await fs.copy('assets', path.resolve(output, 'assets')));
 
   await fs.writeJson(path.resolve(output, 'manifest.json'), fileList);
-  await fs.writeJson(path.resolve(output, 'folder-tree.json'), folderTree);
+  await fs.writeJson(path.resolve(output, 'manifest-pages', 'folder-tree.json'), folderTree);
   await Promise.all(
     Object.keys(files).map(async id => {
       await fs.emptyDir(path.resolve(output, 'manifest-pages', id));
