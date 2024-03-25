@@ -11,7 +11,8 @@ const renderMarkdown = require('./libs/renderMarkdown');
 (async () => {
   const appDir = process.cwd();
   const output = process.env.OUTPUT_PATH || path.resolve(appDir, 'build');
-  const filesPath = await glob('**/*.md', { ignore: ['node_modules/**/*', 'public/**/*', 'build/**/*'], cwd: appDir });
+  const filesPath = await glob('**/*.md', { ignore: ['node_modules/**/*', 'public/**/*', 'build/**/*'], cwd: appDir }),
+    downloadErrorList = [];
   await fs.emptyDir(output);
   await fs.emptyDir(path.resolve(output, 'manifest-pages'));
   await fs.emptyDir(path.resolve(output, 'manifest-pages', 'html'));
@@ -45,9 +46,11 @@ const renderMarkdown = require('./libs/renderMarkdown');
 
       const { mtime } = await fs.stat(item);
 
-      const htmlContent = await renderMarkdown(await fs.readFile(item, 'utf8'), {
+      const { outputHtml: htmlContent, downloadError } = await renderMarkdown(await fs.readFile(item, 'utf8'), {
         outputAssetsPath: path.resolve(output, 'assets')
       });
+
+      downloadErrorList.push(...downloadError);
 
       const htmlFileName = (() => {
         const md5 = crypto.createHash('md5');
@@ -92,6 +95,8 @@ const renderMarkdown = require('./libs/renderMarkdown');
       await Promise.all(files[id].map((data, index) => fs.writeJson(path.resolve(output, 'manifest-pages', id, `${index}.json`), data)));
     })
   );
+
+  downloadErrorList.length > 0 && (await fs.writeFile(path.resolve(output, 'download-shell.sh'), downloadErrorList.map(({ filePath, url }) => `curl -o "${filePath}" "${url}"`).join(';\n')));
 })().catch(e => {
   throw e;
 });

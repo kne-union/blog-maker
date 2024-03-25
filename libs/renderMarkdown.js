@@ -9,18 +9,18 @@ const { encode } = require('plantuml-encoder');
 const fs = require('fs-extra');
 const path = require('path');
 
-const renderPlantuml = async ({ code, path: filePath }) => {
+const renderPlantuml = async ({ code, path: filePath, downloadError }) => {
   const compressedData = encode('@startuml' + '\n' + code + '\n@enduml');
   const url = `https://www.plantuml.com/plantuml/svg/${compressedData}`;
   await fs.ensureDir(path.dirname(filePath));
   await request(url)
     .then(buffer => fs.writeFile(filePath, buffer))
     .catch(() => {
-      console.log(`curl -o ${filePath} ${url};`);
+      downloadError({ filePath, url });
     });
 };
 
-const renderMermaid = async ({ code, path: filePath }) => {
+const renderMermaid = async ({ code, path: filePath, downloadError }) => {
   const compressedData = encodeURIComponent(
     Buffer.from(
       JSON.stringify({
@@ -39,7 +39,7 @@ const renderMermaid = async ({ code, path: filePath }) => {
       await fs.writeFile(filePath, buffer);
     })
     .catch(() => {
-      console.log(`curl -o ${filePath} ${url};`);
+      downloadError({ filePath, url });
     });
 };
 
@@ -61,7 +61,7 @@ const renderMarkdown = async (content, options) => {
         const md5 = crypto.createHash('md5');
         const filename = md5.update(code).digest('hex') + '.svg';
         codeList.push({
-          path: `${outputAssetsPath}/${filename}`,
+          path: `${outputAssetsPath}${path.sep}${filename}`,
           type: langName,
           code
         });
@@ -112,19 +112,18 @@ const renderMarkdown = async (content, options) => {
     });
 
   let outputHtml = md.render(content);
-
+  const downloadError = [];
   await Promise.all(
     codeList.map(item => {
       if (item.type === 'mermaid') {
-        return renderMermaid(item);
+        return renderMermaid(Object.assign({}, item, { downloadError: item => downloadError.push(item) }));
       }
       if (item.type === 'plantuml') {
-        return renderPlantuml(item);
+        return renderPlantuml(Object.assign({}, item, { downloadError: item => downloadError.push(item) }));
       }
     })
   );
-
-  return outputHtml;
+  return { outputHtml, downloadError };
 };
 
 module.exports = renderMarkdown;
