@@ -92,7 +92,6 @@ const renderMarkdown = require('./libs/renderMarkdown');
       await Promise.all(files[id].map((data, index) => fs.writeJson(path.resolve(output, 'manifest-pages', id, `${index}.json`), data)));
     })
   );
-  console.log('构建完成！');
 })().catch(e => {
   throw e;
 });

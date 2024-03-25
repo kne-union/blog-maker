@@ -8,17 +8,19 @@ const request = require('request-promise');
 const { encode } = require('plantuml-encoder');
 const fs = require('fs-extra');
 const path = require('path');
-const urlencode = require('urlencode');
 
-const renderPlantuml = ({ code, path: filePath }) => {
+const renderPlantuml = async ({ code, path: filePath }) => {
   const compressedData = encode('@startuml' + '\n' + code + '\n@enduml');
-  return request(`https://www.plantuml.com/plantuml/svg/${compressedData}`).then(async buffer => {
-    await fs.ensureDir(path.dirname(filePath));
-    await fs.writeFile(filePath, buffer);
-  });
+  const url = `https://www.plantuml.com/plantuml/svg/${compressedData}`;
+  await fs.ensureDir(path.dirname(filePath));
+  await request(url)
+    .then(buffer => fs.writeFile(filePath, buffer))
+    .catch(() => {
+      console.log(`curl -o ${filePath} ${url};`);
+    });
 };
 
-const renderMermaid = ({ code, path: filePath }) => {
+const renderMermaid = async ({ code, path: filePath }) => {
   const compressedData = encodeURIComponent(
     Buffer.from(
       JSON.stringify({
@@ -29,10 +31,16 @@ const renderMermaid = ({ code, path: filePath }) => {
       })
     ).toString('base64')
   );
-  return request(`https://mermaid.ink/svg/${compressedData}`).then(async buffer => {
-    await fs.ensureDir(path.dirname(filePath));
-    await fs.writeFile(filePath, buffer);
-  });
+  const url = `https://mermaid.ink/svg/${compressedData}`;
+  await fs.ensureDir(path.dirname(filePath));
+  await request(`https://mermaid.ink/svg/${compressedData}`)
+    .then(async buffer => {
+      await fs.ensureDir(path.dirname(filePath));
+      await fs.writeFile(filePath, buffer);
+    })
+    .catch(() => {
+      console.log(`curl -o ${filePath} ${url};`);
+    });
 };
 
 const renderMarkdown = async (content, options) => {
