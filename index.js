@@ -52,17 +52,22 @@ const renderMarkdown = require('./libs/renderMarkdown');
 
       downloadErrorList.push(...downloadError);
 
-      const htmlFileName = (() => {
+      const id = md5.update(item).digest('hex');
+      const htmlFileName = id + '.html';
+      const htmlContentMd5 = (() => {
         const md5 = crypto.createHash('md5');
-        return md5.update(htmlContent).digest('hex') + '.html';
+        return md5.update(htmlContent).digest('hex');
       })();
+      const rootPath = '/manifest-pages/html';
       await fs.writeFile(path.resolve(output, 'manifest-pages', 'html', htmlFileName), htmlContent);
       return Object.assign(
         {},
         {
-          id: md5.update(item).digest('hex'),
+          id,
           path: '/' + item.split(path.sep).join('/'),
-          htmlPath: '/manifest-pages/html/' + htmlFileName,
+          htmlPath: `${rootPath}/${htmlFileName}`,
+          rootPath,
+          htmlContentMd5,
           title: filename,
           author,
           index,
